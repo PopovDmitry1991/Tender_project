@@ -28,18 +28,18 @@
 
 **Ссылки на тетради**
 
-- [создание БД](https://github.com/qwestsi81/Tenderplan/blob/main/pet/create_DB.ipynb);
-- [справочник субъектов РФ](https://github.com/qwestsi81/Tenderplan/blob/main/pet/dict_region.ipynb);
-- [справочник меток закупок](https://github.com/qwestsi81/Tenderplan/blob/main/pet/dict_marks.ipynb);
-- [справочник сотрудников компании](https://github.com/qwestsi81/Tenderplan/blob/main/pet/dict_users.ipynb);
-- [справочник статусов закупок](https://github.com/qwestsi81/Tenderplan/blob/main/pet/dict_status.ipynb);
-- [справочник типов закупки](https://github.com/qwestsi81/Tenderplan/blob/main/pet/dict_placingway.ipynb);
-- [список тендеров для создания тб фактов и справочника тендеров](https://github.com/qwestsi81/Tenderplan/blob/main/pet/lst_%D1%82enders.ipynb);
-- [таблицы фактов и справочник тендера](https://github.com/qwestsi81/Tenderplan/blob/main/pet/df_tenders.ipynb);
-- [наполнение БД](https://github.com/qwestsi81/Tenderplan/blob/main/pet/alter_incert_DB.ipynb);
-- [создание view](https://github.com/qwestsi81/Tenderplan/blob/main/pet/creat_view.ipynb);
-- [выполнение программы](https://github.com/qwestsi81/Tenderplan/blob/main/pet/%D0%9E%D1%82%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0%20%D1%81%D0%BA%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B2.ipynb).
+- [создание БД](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/create_DB.ipynb);
+- [справочник субъектов РФ](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/dict_region.ipynb);
+- [справочник меток закупок](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/dict_marks.ipynb);
+- [справочник сотрудников компании](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/dict_users.ipynb);
+- [справочник статусов закупок](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/dict_status.ipynb);
+- [справочник типов закупки](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/dict_placingway.ipynb);
+- [список тендеров для создания тб фактов и справочника тендеров](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/lst_%D1%82enders.ipynb);
+- [таблицы фактов и справочник тендера](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/df_tenders.ipynb);
+- [наполнение БД](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/alter_incert_DB.ipynb);
+- [создание view](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/creat_view.ipynb);
+- [выполнение программы](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%9E%D1%82%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%BA%D0%B0%20%D1%81%D0%BA%D1%80%D0%B8%D0%BF%D1%82%D0%BE%D0%B2.ipynb).
 
 **Ссылки на прочие файлы**
 
-- [схема БД](https://github.com/qwestsi81/Tenderplan/blob/main/pet/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D0%91%D0%94.png).
+- [схема БД](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D0%91%D0%94.png).
