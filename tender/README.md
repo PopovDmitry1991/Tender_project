@@ -42,4 +42,9 @@
 
 **Ссылки на прочие файлы**
 
-- [схема БД](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D0%91%D0%94.png).
+- [схема БД](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D0%91%D0%94.png);
+- [объекты PQ](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%9E%D0%B1%D1%8A%D0%B5%D0%BA%D1%82%D1%8B%20PQ.png);
+- [скрипт M №1](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%A1%D0%BA%D1%80%D0%B8%D0%BF%D1%82%20PQ_1.png);
+- [скрипт M №2](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%A1%D0%BA%D1%80%D0%B8%D0%BF%D1%82%20PQ_2.png);
+- [модель PB](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%9C%D0%BE%D0%B4%D0%B5%D0%BB%D1%8C%20PB.png);
+- [отчет PB](https://github.com/PopovDmitry1991/Tender_project/blob/main/tender/%D0%9E%D1%82%D1%87%D0%B5%D1%82%20PB.png).
