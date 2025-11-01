@@ -1,0 +1,142 @@
+[ 
+    f_dir_bk = (
+        Сервер_ as text, 
+        Куб_ as text
+    ) as table =>[  
+        lst_measures = [
+            type_text = {
+                "Алтайский товар",
+                "БК",
+                "ВесовойШтучный",
+                "Вид Продукта",
+                "Вид Товара",
+                "Локальный товар",
+                "Менеджер",
+                "Менеджер ОПЗ",
+                "Поставщик Основной",
+                "Поставщик РЦ",
+                "РегионИзгТовара",
+                "СезонныйТовар",
+                "ЦеновойСегмент"
+            },
+            type_number = {
+                "Вес Товара",
+                "СрокГоднДней"
+            }
+        ],
+        lst_member_ = [
+            type_text = {
+                "[Номенклатуры].[Торговые марки].[Торговая Марка]",
+                "[Номенклатуры].[Номенклатуры].[Номенклатура]"
+            },
+            member_ = "{{" & 
+                Text.Combine(
+                    type_text,
+                    "} * {"
+                ) &
+                "}}"
+        ],
+        lst_nm_renm_cl = [
+            lst_next = lst_measures[type_text] & lst_measures[type_number],
+            lst_curr = List.Transform(
+                lst_next,
+                (x)=> "[Measures].[" & Text.From(x) & "]"
+            ),
+            to = List.Zip({lst_curr, lst_next})            
+        ],
+        mdx_query = [
+            with_member = [
+                lst_tr = List.Transform(
+                    lst_nm_renm_cl[lst_next],
+                    (x)=>[
+                        a = Text.From(x),
+                        b = "[Measures].[" & a & "] as " &
+                            "[Номенклатуры].[Номенклатуры].CurrentMember.Properties( '" & a & "'  )"
+                    ][b]
+                ),
+                to = "member " & Text.Combine(lst_tr, " member ")
+            ][to],
+            select_member = [
+                lst_tr = lst_nm_renm_cl[lst_curr],
+                to = "{" & Text.Combine(lst_tr, ", ") & "}"
+            ][to]
+        ],
+        bin = [
+            server = Сервер_,
+            base = Куб_,
+            query_ = [
+                Query="
+                    with
+                        "& mdx_query[with_member] &"
+                    select
+                        "& mdx_query[select_member] &" on 0,
+                    non empty
+                        "& lst_member_[member_] &" on 1
+                    from 	
+                        (
+                            select
+                                {
+                                    [Номенклатуры].[Группа].&[9759],
+                                    [Номенклатуры].[Группа].&[9770]
+                                } on 0
+                            from [Товародвижение]
+                        )              
+                ", 
+                Implementation="2.0"
+            ]
+        ],
+        from = AnalysisServices.Database(
+            bin[server], 
+            bin[base], 
+            bin[query_]
+        ),
+        tb_renm_cl = Table.RenameColumns(
+            from,
+            lst_nm_renm_cl[to]
+        ),
+        to = Table.TransformColumnTypes(
+            tb_renm_cl,
+            List.Transform(
+                lst_member_[type_text],
+                (x)=>{Text.From(x) & ".[MEMBER_CAPTION]", type text}
+            ) &
+            List.Transform(
+                lst_measures[type_text],
+                (x)=>{x, type text}
+            ) &
+            List.Transform(
+                lst_measures[type_number],
+                (x)=>{x, type number}
+            )
+        )
+    ][to],
+    Documentation = [
+        Documentation.Name = "f_dir_bk",
+        Documentation.Description = "Функция формирует справочник по номенклатуре из куба по таблице товародвижение. Имеет два обязательных параметра: наименование сервера; наименование куба. В данной версии группы ФРОВ, ОХЛАЖДЕННАЯ ПРОДУКЦИЯ и ЯЙЦА",
+        Documentation.LongDescription = "Функция формирует справочник по номенклатуре из куба по таблице товародвижение. Имеет два обязательных параметра: наименование сервера; наименование куба. В данной версии группы ФРОВ, ОХЛАЖДЕННАЯ ПРОДУКЦИЯ и ЯЙЦА",
+        Documentation.Category = "Table",
+        Documentation.Version = "1.0",
+        Documentation.Source = "Локально",
+        Documentation.Author = "Попов Д.И.",
+        Documentation.Examples = { 
+            [
+                Description =  "Вводим значение первого параметра ""куб"" и значение второго параметра ""сервер"". Данные в примере актуальны на 17.07.2025 года.",
+                Code = "f_dir_bk(""сервер"", ""куб"")",
+                Result = "#table( 
+   type table [#""[Номенклатуры].[Номенклатуры].[Группа].[MEMBER_CAPTION]"" = text, #""[Номенклатуры].[Номенклатуры].[Подгруппа].[MEMBER_CAPTION]"" = text, #""[Номенклатуры].[Номенклатуры].[Номенклатуры].[MEMBER_CAPTION]"" = text, #""Алтайский товар"" = text, #""БК"" = text, #""ВесовойШтучный"" = text, #""Вид Продукта"" = text, #""Вид Товара"" = text, #""Локальный товар"" = text, #""Менеджер"" = text, #""Менеджер ОПЗ"" = text, #""Поставщик Основной"" = text, #""Поставщик РЦ"" = text, , #""РегионИзгТовара"" = text, #""СезонныйТовар"" = text, #""ЦеновойСегмент"" = text, #""Вес Товара"" = number, #""СрокГоднДней"" = number],
+    {
+        ...
+    }
+)" 
+            ]
+        
+        }
+    ],
+    to = Value.ReplaceType(
+        f_dir_bk,
+        Value.ReplaceMetadata(
+            Value.Type(f_dir_bk),
+            Documentation
+        )
+    )
+][to]

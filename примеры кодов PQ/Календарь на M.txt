@@ -1,0 +1,448 @@
+[ 
+    f_calendar_ = (
+        optional Дата_начала_ as any, 
+        optional Дата_окончания_ as any
+    ) as table =>[
+        bin = [
+            first_date_ = Date.From( Дата_начала_ ?? Date.AddDays( Date.From( DateTime.LocalNow() ), -1 ) ),
+            last_date_ = [
+                l_d = Date.From( Дата_окончания_ ?? first_date_ ),
+                true_d = #date( Date.Year(l_d), 12, 31 ),
+                true_ = l_d = true_d
+            ]
+        ],
+        from = List.Dates(
+            #date( Date.Year( bin[first_date_] ), 01, 01 ),
+            [
+                a = Date.Year( bin[first_date_] ),
+                b = Date.Year( bin[last_date_][l_d] ),
+                c = Number.From( Duration.Days(#date(b, 12, 31) - #date(a, 01, 01) ) )+1
+            ][c],
+            #duration(1, 0, 0, 0)
+        ),
+        lst = List.Transform(
+            from, 
+            (x)=> {x} & /*Дата*/
+                {
+                    if (
+                            (Duration.Days( #date( Date.Year(x), 12, 31 ) - #date( Date.Year(x), 1, 1 ) ) + 1 = 366) and
+                            x > #date( Date.Year(x), 2, 28 )
+                        ) or
+                        (
+                            (Duration.Days( #date( Date.Year( Date.AddYears(x, -1 ) ), 12, 31 ) - #date( Date.Year( Date.AddYears(x, -1 ) ), 1, 1 ) ) + 1 = 366) and
+                            x <= #date( Date.Year(x), 2, 28 )
+                        )
+                    then Date.AddDays( Date.AddYears(x, -1), 2 )
+                    else Date.AddDays( Date.AddYears(x, -1), 1 )
+                } &
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                {Date.Year(x)} & /*Год*/
+                {Date.WeekOfYear(x)} &  /*Неделя года*/
+                {Date.Month(x)} &  /* Месяц*/
+                {Date.Day(x)} &
+                {Date.QuarterOfYear(x)} & /*Квартал число*/
+                {
+                    List.Sum(
+                        {
+                            Value.Multiply( Number.From( Date.Year(x) ), 100 ), 
+                            Number.From( Date.Month(x) )
+                        }
+                    )
+                } & /*Месяц/год/чсло*/
+                {
+                    List.Sum(
+                        {
+                            Value.Multiply( Number.From( Date.Year(x) ), 100 ), 
+                            Number.From( Date.QuarterOfYear(x) )
+                        }
+                    )
+                } & /*Квартал/год/чсло*/
+                {
+                    List.Sum(
+                        {
+                            Value.Multiply( Number.From( Date.Year(x) ), 100 ), 
+                            Number.From( Date.WeekOfYear(x, Day.Monday) )
+                        }
+                    )
+                } &
+                {
+                    [
+                        year_iso = Date.Year(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            )
+                        ),
+                        year_curr = Date.Year(x),
+                        date_first = #date(year_curr, 01, 01),
+                        date_first_iso = Date.AddDays(
+                            date_first, 
+                            List.Sum({3, -Date.DayOfWeek(date_first, Day.Monday)})
+                        ),
+                        year_first_true = Date.Year(date_first) <> Date.Year(date_first_iso),
+                        year_curr_true = year_iso = year_curr,
+                        week_curr_1prev = List.Sum({Date.WeekOfYear(x, Day.Monday), -1}),
+                        week_iso = Date.WeekOfYear(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            ),
+                            Day.Monday
+                        ),
+                        to  = if year_first_true and year_curr_true
+                            then List.Sum(
+                                {
+                                    Value.Multiply( Number.From(year_curr), 100 ),
+                                    Number.From( week_curr_1prev )
+                                }
+                            )
+                            else List.Sum(
+                                {
+                                    Value.Multiply( Number.From(year_iso), 100 ),
+                                    Number.From( week_iso )
+                                }
+                            )
+                    ][to]
+                } &/*год/нед ISO 8601*/
+                {
+                    [
+                        year_iso = Date.Year(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            )
+                        ),
+                        week_iso = Date.WeekOfYear(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            ),
+                            Day.Monday
+                        ),
+                        to = List.Sum(
+                                {
+                                    Value.Multiply( Number.From(year_iso), 100 ),
+                                    Number.From( week_iso )
+                                }
+                            )
+                    ][to]
+                } & /*год/нед ISO 8601 только первая и последняя недели*/
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                {Date.MonthName(x)} &  /*Название месяца*/
+                {
+                    Text.Combine(
+                        {
+                            Date.MonthName(x), 
+                            Text.From( Date.Year(x) )
+                        }, 
+                        " "
+                    )
+                } &  /* месяц/год*/
+                {
+                    Text.Combine(
+                        {
+                            "КВ",
+                            Text.From( Date.QuarterOfYear(x) )
+                        }, 
+                        " - " 
+                    )
+                } &  /*Квартал название*/
+                {
+                    Text.Combine(
+                        {
+                            Text.From( Date.Year(x) ),
+                            "КВ -",
+                            Text.From( Date.QuarterOfYear(x) )
+                        }, 
+                        " " 
+                    )
+                } & /*Квартал год*/
+                {Date.DayOfWeekName(x)} &
+                {
+                    if bin[last_date_][true_]
+                    then "+"
+                    else if x < Date.StartOfMonth(bin[last_date_][l_d])
+                        then "+"
+                        else "-"
+                } &
+                {
+                    Text.From( Date.WeekOfYear(x, Day.Monday) ) &
+                    " неделя " &
+                    Text.From( Date.Year(x) ) &
+                    " (" &
+                    Text.From( 
+                        [
+                            week_ = Date.StartOfWeek(x),
+                            year_ = Date.StartOfYear(x),
+                            to = if Date.Year(week_) <> Date.Year(year_)
+                                then year_
+                                else week_
+                        ][to] 
+                    ) &
+                    "-" &
+                    Text.From( 
+                        [
+                            week_ = Date.EndOfWeek(x),
+                            year_ = Date.EndOfYear(x),
+                            to = if Date.Year(week_) <> Date.Year(year_)
+                                then year_
+                                else week_
+                        ][to] 
+                    ) &
+                    ")"
+                } & /*Неделя года*/
+                {
+                    Text.From( Date.WeekOfYear(x, Day.Monday) ) &
+                    " нед. " &
+                    Text.End( Text.From( Date.Year(x) ), 2) &
+                    " " &
+                    Text.From( 
+                        [
+                            week_ = Date.StartOfWeek(x),
+                            year_ = Date.StartOfYear(x),
+                            if_ = if Date.Year(week_) <> Date.Year(year_)
+                                then year_
+                                else week_,
+                            to = Text.Start( Text.From (if_), 5)
+                        ][to] 
+                    ) &
+                    "-" &
+                    Text.From( 
+                        [
+                            week_ = Date.EndOfWeek(x),
+                            year_ = Date.EndOfYear(x),
+                            if_ = if Date.Year(week_) <> Date.Year(year_)
+                                then year_
+                                else week_,
+                            to = Text.Start( Text.From (if_), 5)
+                        ][to] 
+                    )
+                } & /*Неделя года сокр*/
+                {
+                    [
+                        week_ = Date.StartOfWeek(bin[last_date_][l_d]),
+                        year_ = Date.StartOfYear(bin[last_date_][l_d]),
+                        if_ = Date.Year(week_) <> Date.Year(year_),
+                        to = if if_ and x < year_ and x >= week_
+                            then "+"
+                            else if not if_ and x < Date.StartOfWeek(bin[last_date_][l_d]) and
+                                    x >= Date.AddDays( Date.StartOfWeek(bin[last_date_][l_d]), -7 )
+                                then "+"
+                                else "-"
+                    ][to]
+                } &
+                {
+                    if x < Date.StartOfWeek(bin[last_date_][l_d]) and
+                        x >= Date.AddDays( Date.StartOfWeek(bin[last_date_][l_d]), -7 )
+                    then "+"
+                    else "-"
+                } & /*Пред неделя календарная*/
+                {
+                    [
+                        week_ = Date.StartOfWeek(bin[last_date_][l_d]),
+                        year_ = Date.StartOfYear(bin[last_date_][l_d]),
+                        week_2 = Date.EndOfWeek(bin[last_date_][l_d]),
+                        year_2 = Date.EndOfYear(bin[last_date_][l_d]),
+                        if_ = Date.Year(week_) <> Date.Year(year_),
+                        if_2 = Date.Year(week_2) <> Date.Year(year_2),
+                        to = if ( if_ and x >= year_ and x <= week_2 ) or
+                                ( if_2 and x <= year_2 and x >= week_ )
+                            then "+"
+                            else if not if_ and not if_2 and x >= Date.StartOfWeek(bin[last_date_][l_d]) and
+                                    x <= Date.AddDays( Date.StartOfWeek(bin[last_date_][l_d]), 6 )
+                                then "+"
+                                else "-"
+                    ][to]
+                } & /*Тек нед. куб*/
+                {
+                    if x >= Date.StartOfWeek(bin[last_date_][l_d]) and
+                        x <= Date.AddDays( Date.StartOfWeek(bin[last_date_][l_d]), 6 )
+                    then "+"
+                    else "-"
+                } &
+                {
+                    if x <= bin[last_date_][l_d]
+                    then "+"
+                    else "-"
+                } & /*Период данных от макс даты*/
+                {
+                    [
+                        year_iso = Date.Year(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            )
+                        ),
+                        year_curr = Date.Year(x),
+                        date_first = #date(year_curr, 01, 01),
+                        date_first_iso = Date.AddDays(
+                            date_first, 
+                            List.Sum({3, -Date.DayOfWeek(date_first, Day.Monday)})
+                        ),
+                        year_first_true = Date.Year(date_first) <> Date.Year(date_first_iso),
+                        year_curr_true = year_iso = year_curr,
+                        week_curr_1prev = List.Sum({Date.WeekOfYear(x, Day.Monday), -1}),
+                        week_iso = Date.WeekOfYear(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            ),
+                            Day.Monday
+                        ),
+                        week_start = Date.StartOfWeek(x, Day.Monday),
+                        week_end = Date.EndOfWeek(x, Day.Monday),
+                        to  = if year_first_true and year_curr_true
+                            then Text.From(week_curr_1prev) & 
+                                " нед. " & 
+                                Text.End( Text.From(year_curr), 2 ) & 
+                                " " & 
+                                Text.Start( Text.From(week_start), 5 ) & 
+                                "-" & 
+                                Text.Start( Text.From(week_end), 5 )
+                            else Text.From(week_iso) & 
+                                " нед. " & 
+                                Text.End( Text.From(year_iso), 2 ) & 
+                                " " &
+                                Text.Start( Text.From(week_start), 5 ) & 
+                                "-" & 
+                                Text.Start( Text.From(week_end), 5 )
+                    ][to]
+                } & /*Неделя ISO 8601*/
+                {
+                    [
+                        year_iso = Date.Year(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            )
+                        ),
+                        week_iso = Date.WeekOfYear(
+                            Date.AddDays(
+                                x, 
+                                List.Sum({3, -Date.DayOfWeek(x, Day.Monday)})
+                            ),
+                            Day.Monday
+                        ),
+                        week_start = Date.StartOfWeek(x, Day.Monday),
+                        week_end = Date.EndOfWeek(x, Day.Monday),
+                        to = Text.From(week_iso) & 
+                            " нед. " & 
+                            Text.End( Text.From(year_iso), 2 ) & 
+                            " " &
+                            Text.Start( Text.From(week_start), 5 ) & 
+                            "-" & 
+                            Text.Start( Text.From(week_end), 5 )
+                    ][to]
+                } /*Неделя ISO 8601 только первая и последняя неделя*/
+            ),
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        nms =[
+            type_date =  {
+                "Дата", 
+                "Дата wdwd"
+            },
+            type_int64 = { 
+                "Год", 
+                "Нед. года", 
+                "Мес.",
+                "День",
+                "Кв.",
+                "Мес./год_ч",
+                "Кв./год_ч",
+                "Нед./год_ч",
+                "Нед./год iso full_ч",
+                "Нед./год iso f/l_ч"
+            }, 
+            type_text = {
+                "Назв. мес.", 
+                "Мес./год",  
+                "Кв. назв.", 
+                "Кв./год", 
+                "День нед.",
+                "Пер. дан. мес.",
+                "Нед./год",
+                "Нед. (dd.mm-dd.mm)",
+                "Пред. нед. куб",
+                "Пред. нед. кал.",
+                "Тек. нед. куб",
+                "Тек. нед. кал.",
+                "Пер. дан. дата",
+                "Нед. iso full",
+                "Нед. iso f/l"
+            }
+        ],
+        to = Table.FromList(
+            lst, 
+            (x)=>x, 
+            nms[type_date] & 
+            nms[type_int64] &
+            nms[type_text]
+        ),
+        #"Измененный тип" = Table.TransformColumnTypes(
+            to,
+            List.Transform(
+                nms[type_date],
+                (x)=>{x, type date}
+            ) &
+            List.Transform(
+                nms[type_int64],
+                (x)=>{x, Int64.Type}
+            ) &
+            List.Transform(
+                nms[type_text],
+                (x)=>{x, type text}
+            )
+        )
+    ][#"Измененный тип"],
+    Documentation = [
+        Documentation.Name = "f_calendar",
+        Documentation.Description = "Функция формирует календарь. Имеет два необязательных параметра ""Дата_начала_"" и ""Дата_окончания_"". Если нет ""Даты_окончания"", то по умолчанию ""Дата_начала_"", если нет и ""Даты начала_"" то по умолчанию вчерашний день. У данной таблицы календаря есть столбец ""Период данных месяц"", который выводит ""+"" если даты календаря меньше начала месяца параметра ""Дата_окончания_"" или ""-"" если больше. Если параметр ""Дата_окончания_"" равна концу года, то все значения в данном столбце равны ""+"".",
+        Documentation.LongDescription = "Функция формирует календарь. Имеет два необязательных параметра ""Дата_начала_"" и ""Дата_окончания_"". Если нет ""Даты_окончания"", то по умолчанию ""Дата_начала_"", если нет и ""Даты начала_"" то по умолчанию вчерашний день. У данной таблицы календаря есть столбец ""Период данных месяц"", который выводит ""+"" если даты календаря меньше начала месяца параметра ""Дата_окончания_"" или ""-"" если больше. Если параметр ""Дата_окончания_"" равна концу года, то все значения в данном столбце равны ""+"".",
+        Documentation.Category = "Table",
+        Documentation.Version = "1.0",
+        Documentation.Source = "Локально",
+        Documentation.Author = "Попов Д.И.",
+        Documentation.Examples = { 
+            [
+                Description =  "Вызываем функцию f_calendar без параметров. Вызываем 05.08.2025 числа. Будет сформирован календарь за 2025 год.",
+                Code = "f_calendar()",
+                Result = "#table( 
+   type table [#""Дата"" = date, #""Дата wdwd"" = date , #""Год"" = Int64.Type, #""Нед. года"" = Int64.Type, #""Мес."" = Int64.Type, #""День"" = Int64.Type, #""Кв."" = Int64.Type, #""Мес./год_ч"" = Int64.Type, #""Кв./год_ч"" = Int64.Type, #""Нед./год_ч"" = Int64.Type, ""Нед./год iso full_ч"" = Int64.Type, ""Нед./год iso f/l_ч"" = Int64.Type, #""Назв. мес."" = text, #""Мес./год"" = text, #""Кв. назв."" = text, #""Кв./год"" = text, #""День нед."" = text, #""Пер. дан. мес."" = text, #""Нед./год"" = text, #""Нед. (dd.mm-dd.mm)"" = text, #""Пред. нед. куб"" = text, #""Пред. нед. кал."" = text, #""Тек. нед. куб"" = text, #""Тек. нед. кал."" = text, #""Пер. дан. дата"" = text, #""Нед. iso full"" = text, #""Нед. iso f/l"" = text],
+    {
+        ...,
+        {31.12.2025, 01.01.2026, 2025, 53, 12, 31, 4, 202512, 202504, 202553, 202601, 202601, ""Декабрь"", ""Декабрь 2025"", ""КВ - 4"", ""2025 КВ - 4"", ""среда"", ""-"", ""53 неделя 2025 (29.12.2025-31.12.2025)"", ""53 нед. 25 29.12.-31.12."", ""-"", ""-"", ""-"", ""-"", ""-"", ""1 нед. 26 29.12-04.01"", ""1 нед. 26 29.12-04.01""}
+    }
+)" 
+            ],
+            [
+                Description =  "Вводим значение текстом ""01.01.2025"", ""01/01/2025"", ""01-01-2025"" или датой #date(2025,1,1)",
+                Code = "f_calendar(""01-01-2025"")",
+                Result = "#table( 
+   type table [#""Дата"" = date, #""Дата wdwd"" = date, #""Год"" = Int64.Type, #""Нед. года"" = Int64.Type, #""Мес."" = Int64.Type, #""День"" = Int64.Type, #""Кв."" = Int64.Type, #""Мес./год_ч"" = Int64.Type, #""Кв./год_ч"" = Int64.Type, #""Нед./год_ч"" = Int64.Type, ""Нед./год iso full_ч"" = Int64.Type, ""Нед./год iso f/l_ч"" = Int64.Type, #""Назв. мес."" = text, #""Мес./год"" = text, #""Кв. назв."" = text, #""Кв./год"" = text, #""День нед."" = text, #""Пер. дан. мес."" = text, #""Нед./год"" = text, #""Нед. (dd.mm-dd.mm)"" = text, #""Пред. нед. куб"" = text, #""Пред. нед. кал."" = text, #""Тек. нед. куб"" = text, #""Тек. нед. кал."" = text, #""Пер. дан. дата"" = text, #""Нед. iso full"" = text, #""Нед. iso f/l"" = text],
+    {
+        ...,
+        {31.12.2025, 01.01.2026, 2025, 53, 12, 31, 4, 202512, 202504, 202553, 202601, 202601, ""Декабрь"", ""Декабрь 2025"", ""КВ - 4"", ""2025 КВ - 4"", ""среда"", ""-"", ""53 неделя 2025 (29.12.2025-31.12.2025)"", ""53 нед. 25 29.12.-31.12."", ""-"", ""-"", ""-"", ""-"", ""-"", ""1 нед. 26 29.12-04.01"", ""1 нед. 26 29.12-04.01""}
+    }
+)" 
+            ],
+            [
+                Description =  "Вводим значение текстом ""01.01.2025"", ""01/01/2025"", ""01-01-2025"" или датой #date(2025,1,1) и вводим второй параметр ""31-12-2026""",
+                Code = "f_calendar(""01-01-2025"", ""31-12-2026"")",
+                Result = "#table(
+   type table [#""Дата"" = date, #""Дата wdwd"" = date, #""Год"" = Int64.Type, #""Нед. года"" = Int64.Type, #""Мес."" = Int64.Type, #""День"" = Int64.Type, #""Кв."" = Int64.Type, #""Мес./год_ч"" = Int64.Type, #""Кв./год_ч"" = Int64.Type, #""Нед./год_ч"" = Int64.Type, ""Нед./год iso full_ч"" = Int64.Type, ""Нед./год iso f/l_ч"" = Int64.Type, #""Назв. мес."" = text, #""Мес./год"" = text, #""Кв. назв."" = text, #""Кв./год"" = text, #""День нед."" = text, #""Пер. дан. мес."" = text, #""Нед./год"" = text, #""Нед. (dd.mm-dd.mm)"" = text, #""Пред. нед. куб"" = text, #""Пред. нед. кал."" = text, #""Тек. нед. куб"" = text, #""Тек. нед. кал."" = text, #""Пер. дан. дата"" = text, #""Нед. iso full"" = text, #""Нед. iso f/l"" = text],
+    {
+        ...,
+        {31.12.2026, 01.01.2027, 2026, 53, 12, 31, 4, 202612, 202604, 202653, 202653, 202653, ""Декабрь"", ""Декабрь 2026"", ""КВ - 4"", ""2026 КВ - 4"", ""четверг"", ""+"", ""53 неделя 2026 (28.12.2026-31.12.2026)"", ""53 нед. 26 28.12.-31.12."", ""-"", ""-"", ""+"", ""+"", ""+"", ""53 нед. 26 28.12-03.01"", ""53 нед. 26 28.12-03.01""}
+    }
+)" 
+            ]
+        }
+    ],
+    to = Value.ReplaceType(
+        f_calendar_,
+        Value.ReplaceMetadata(
+            Value.Type(f_calendar_),
+            Documentation
+        )
+    )
+][to]
